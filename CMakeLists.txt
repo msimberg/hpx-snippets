@@ -22,3 +22,6 @@ target_link_libraries(future_then_benchmark ${HPX_LIBRARIES})
 add_executable(init_benchmark init_benchmark.cpp)
 target_link_libraries(init_benchmark ${HPX_LIBRARIES})
 
+add_executable(openmp_benchmark openmp_benchmark.cpp)
+target_link_libraries(openmp_benchmark ${HPX_LIBRARIES})
+
