@@ -74,13 +74,12 @@ void benchmark_one(F benchmark_func, const int n)
     auto init_avg = std::accumulate(std::begin(timings_init), std::end(timings_init), 0.0) / n;
     auto finalize_avg = std::accumulate(std::begin(timings_finalize), std::end(timings_finalize), 0.0) / n;
 
-    std::cout << *init_min << ", "
-              << *init_max << ", "
-              << init_avg << ", "
-              << *finalize_min << ", "
-              << *finalize_max << ", "
-              << finalize_avg
-              << "\n";
+    std::cout << *init_min * 1e6 << ", "
+              << *init_max * 1e6 << ", "
+              << init_avg * 1e6 << ", "
+              << *finalize_min * 1e6 << ", "
+              << *finalize_max * 1e6 << ", "
+              << finalize_avg * 1e6 << "\n";
 }
 
 int main(int argc, char ** argv)
@@ -100,7 +99,7 @@ int main(int argc, char ** argv)
     // TODO: Modify resource partitioner?
     // TODO: Overhead in e.g. OpenMP?
 
-    std::cout << "test, init min [s], init max [s], init avg [s], finalize min [s], finalize max [s], finalize avg [s]\n";
+    std::cout << "test, init min [µs], init max [µs], init avg [µs], finalize min [µs], finalize max [µs], finalize avg [µs]\n";
 
     std::cout << "init/finalize/cb, ";
     benchmark_one(&benchmark_init_finalize_cb, 50);
