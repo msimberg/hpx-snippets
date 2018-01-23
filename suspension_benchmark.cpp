@@ -11,6 +11,8 @@
 #include <hpx/parallel/algorithms/minmax.hpp>
 #include <hpx/util/high_resolution_clock.hpp>
 
+#include <boost/program_options.hpp>
+
 #include <algorithm>
 #include <cassert>
 #include <iostream>
@@ -24,7 +26,7 @@ static std::vector<double> timings_main;
 static std::vector<double> timings_stop;
 static hpx::util::high_resolution_timer timer;
 
-int hpx_main(int, char**)
+int hpx_main(boost::program_options::variables_map& vm)
 {
 }
 
@@ -54,25 +56,34 @@ struct statistics compute_statistics(std::vector<double> x)
 
 int main(int argc, char ** argv)
 {
-    const int n = 100;
+    boost::program_options::options_description desc_commandline;
+    desc_commandline.add_options()
+        ("delay-exit", boost::program_options::value<bool>()->default_value(true), "Delay exit of scheduling loops")
+        ("background-work", boost::program_options::value<bool>()->default_value(true), "Do background work")
+        ("repetitions", boost::program_options::value<std::uint64_t>()->default_value(100), "Number of repetitions")
+        ;
 
-    timings_start.reserve(n);
-    timings_main.reserve(n);
-    timings_stop.reserve(n);
+    boost::program_options::variables_map vm;
+    boost::program_options::store(
+        boost::program_options::command_line_parser(argc, argv)
+        .allow_unregistered()
+        .options(desc_commandline)
+        .run(),
+        vm);
 
-    // std::cout
-    //     << "threads, "
-    //     << "first start [s], first stop [s], first main [s], first finalize [s], "
-    //     << "start min [s], start max [s], start avg [s], "
-    //     << "stop min [s], stop max [s], stop avg [s], "
-    //     << "main min [s], main max [s], main avg [s], "
-    //     << "finalize min [s], finalize max [s], finalize avg [s]"
-    //     << "\n";
+    bool delay_exit = vm["delay-exit"].as<bool>();
+    bool background_work = vm["background-work"].as<bool>();
+    std::uint64_t repetitions = vm["repetitions"].as<std::uint64_t>();
 
-    hpx::resource::partitioner rp(argc, argv);
+    timings_start.reserve(repetitions);
+    timings_main.reserve(repetitions);
+    timings_stop.reserve(repetitions);
+
+    hpx::resource::partitioner rp(desc_commandline, argc, argv);
 
     rp.create_thread_pool("default",
-        [](hpx::threads::policies::callback_notifier& notifier,
+        [delay_exit, background_work](
+            hpx::threads::policies::callback_notifier& notifier,
             std::size_t num_threads, std::size_t thread_offset,
             std::size_t pool_index, std::string const& pool_name)
         -> std::unique_ptr<hpx::threads::detail::thread_pool_base>
@@ -82,7 +93,9 @@ int main(int argc, char ** argv)
             auto scheduler = std::make_unique<local_queue_scheduler<>>(init);
 
             auto mode = hpx::threads::policies::scheduler_mode(
-                hpx::threads::policies::reduce_thread_priority);
+                hpx::threads::policies::reduce_thread_priority |
+                (delay_exit ? hpx::threads::policies::delay_exit : 0) |
+                (background_work ? hpx::threads::policies::do_background_work : 0));
 
             std::unique_ptr<hpx::threads::detail::thread_pool_base> pool(
                 new hpx::threads::detail::scheduled_thread_pool<local_queue_scheduler<>>(
@@ -92,11 +105,11 @@ int main(int argc, char ** argv)
             return pool;
         });
 
-    hpx::start(1, nullptr);
+    hpx::start();
     hpx::suspend();
 
     // Time multiple runs
-    for (int i = 0; i < n; ++i)
+    for (int i = 0; i < repetitions; ++i)
     {
         timer.restart();
 
