@@ -27,10 +27,10 @@ int main()
 
         auto t = timer.elapsed();
 
-        std::cout << "first loop: " << t * 1e6 << " µs\n\n";
+        // std::cout << "first loop: " << t * 1e6 << " µs\n\n";
     }
 
-    std::cout << "test, min [µs], max [µs], avg [µs]\n";
+    // std::cout << "test, min [µs], max [µs], avg [µs]\n";
 
     {
         std::vector<double> timings;
@@ -52,10 +52,11 @@ int main()
         auto timings_max = std::max_element(std::begin(timings), std::end(timings));
         auto timings_avg = std::accumulate(std::begin(timings), std::end(timings), 0.0) / n;
 
-        std::cout << "omp_parallel" << ", "
-                << *timings_min * 1e6 << ", "
-                << *timings_max * 1e6 << ", "
-                << timings_avg * 1e6 << "\n";
+        std::cout
+            << *timings_min << ", "
+            << *timings_max << ", "
+            << timings_avg << ", "
+            << x << "\n";
     }
 
     {
@@ -73,10 +74,10 @@ int main()
         auto timings_max = std::max_element(std::begin(timings), std::end(timings));
         auto timings_avg = std::accumulate(std::begin(timings), std::end(timings), 0.0) / n;
 
-        std::cout << "timing_overhead" << ", "
-                << *timings_min * 1e6 << ", "
-                << *timings_max * 1e6 << ", "
-                << timings_avg * 1e6 << "\n";
+        // std::cout << "timing_overhead" << ", "
+        //         << *timings_min * 1e6 << ", "
+        //         << *timings_max * 1e6 << ", "
+        //         << timings_avg * 1e6 << "\n";
     }
 
     return x;
