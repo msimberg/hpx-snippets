@@ -15,19 +15,19 @@
 #include <vector>
 
 static std::vector<double> timings_start;
-static std::vector<double> timings_stop;
+static std::vector<double> timings_async;
 static std::vector<double> timings_main;
-static std::vector<double> timings_finalize;
-static hpx::util::high_resolution_timer timer_start;
-static hpx::util::high_resolution_timer timer_stop;
-static hpx::util::high_resolution_timer timer_main;
-static hpx::util::high_resolution_timer timer_finalize;
+static std::vector<double> timings_stop;
+static hpx::util::high_resolution_timer timer;
 
 int hpx_main(int, char**)
 {
-    timings_main.push_back(timer_main.elapsed());
-    timer_finalize.restart();
-    return hpx::finalize();
+}
+
+int test_callback()
+{
+    timings_main.push_back(timer.elapsed());
+    return 0;
 }
 
 struct statistics
@@ -50,12 +50,11 @@ struct statistics compute_statistics(std::vector<double> x)
 
 int main(int argc, char ** argv)
 {
-    const int n = 10;
+    const int n = 100;
 
     timings_start.reserve(n);
-    timings_stop.reserve(n);
     timings_main.reserve(n);
-    timings_finalize.reserve(n);
+    timings_stop.reserve(n);
 
     // std::cout
     //     << "threads, "
@@ -66,62 +65,41 @@ int main(int argc, char ** argv)
     //     << "finalize min [s], finalize max [s], finalize avg [s]"
     //     << "\n";
 
-    // Time first run
-    timer_start.restart();
-    timer_main.restart();
-
     hpx::start(1, nullptr);
-
-    timings_start.push_back(timer_start.elapsed());
-    timer_stop.restart();
-
-    hpx::stop(hpx::runtime_exit_mode_shutdown);
-
-    timings_finalize.push_back(timer_finalize.elapsed());
-    timings_stop.push_back(timer_stop.elapsed());
-
-    std::cout
-        << timings_start[0] << ", "
-        << timings_stop[0] << ", "
-        << timings_main[0] << ", "
-        << timings_finalize[0] << ", ";
-
-    // Reset results
-    timings_start.clear();
-    timings_stop.clear();
-    timings_main.clear();
-    timings_finalize.clear();
+    hpx::suspend();
 
     // Time multiple runs
     for (int i = 0; i < n; ++i)
     {
-        timer_start.restart();
-        timer_main.restart();
+        timer.restart();
 
-        hpx::start(1, nullptr);
+        hpx::resume();
+        timings_start.push_back(timer.elapsed());
 
-        timings_start.push_back(timer_start.elapsed());
-        timer_stop.restart();
+        hpx::async(&test_callback);
+        timings_async.push_back(timer.elapsed());
 
-        hpx::stop(hpx::runtime_exit_mode_shutdown);
+        hpx::suspend();
+        timings_stop.push_back(timer.elapsed());
 
-        timings_finalize.push_back(timer_finalize.elapsed());
-        timings_stop.push_back(timer_stop.elapsed());
+        timer.restart();
     }
 
+    hpx::resume();
+    hpx::async([]() { hpx::finalize(); });
+    hpx::stop();
+
     auto start_results = compute_statistics(timings_start);
-    auto stop_results = compute_statistics(timings_stop);
+    auto async_results = compute_statistics(timings_async);
     auto main_results = compute_statistics(timings_main);
-    auto finalize_results = compute_statistics(timings_finalize);
+    auto stop_results = compute_statistics(timings_stop);
 
     std::cout
+        << std::fixed
         << start_results.min << ", " << start_results.max << ", " << start_results.average << ", "
-        << stop_results.min << ", " << stop_results.max << ", " << stop_results.average << ", "
+        << async_results.min << ", " << async_results.max << ", " << async_results.average << ", "
         << main_results.min << ", " << main_results.max << ", " << main_results.average << ", "
-        << finalize_results.min << ", " << finalize_results.max << ", " << finalize_results.average
+        << stop_results.min << ", " << stop_results.max << ", " << stop_results.average
         << "\n";
-
-    hpx::start(1, nullptr);
-    hpx::stop(hpx::runtime_exit_mode_shutdown);
 }
 
