@@ -1,7 +1,11 @@
 #include <hpx/hpx.hpp>
 #include <hpx/hpx_init.hpp>
 #include <hpx/hpx_start.hpp>
+#include <hpx/include/resource_partitioner.hpp>
+#include <hpx/include/threads.hpp>
 #include <hpx/exception.hpp>
+#include <hpx/runtime/threads/policies/scheduler_mode.hpp>
+#include <hpx/runtime/threads/policies/schedulers.hpp>
 #include <hpx/throw_exception.hpp>
 #include <hpx/parallel/algorithms/sort.hpp>
 #include <hpx/parallel/algorithms/minmax.hpp>
@@ -64,6 +68,29 @@ int main(int argc, char ** argv)
     //     << "main min [s], main max [s], main avg [s], "
     //     << "finalize min [s], finalize max [s], finalize avg [s]"
     //     << "\n";
+
+    hpx::resource::partitioner rp(argc, argv);
+
+    rp.create_thread_pool("default",
+        [](hpx::threads::policies::callback_notifier& notifier,
+            std::size_t num_threads, std::size_t thread_offset,
+            std::size_t pool_index, std::string const& pool_name)
+        -> std::unique_ptr<hpx::threads::detail::thread_pool_base>
+        {
+            using hpx::threads::policies::local_queue_scheduler;
+            local_queue_scheduler<>::init_parameter_type init(num_threads);
+            auto scheduler = std::make_unique<local_queue_scheduler<>>(init);
+
+            auto mode = hpx::threads::policies::scheduler_mode(
+                hpx::threads::policies::reduce_thread_priority);
+
+            std::unique_ptr<hpx::threads::detail::thread_pool_base> pool(
+                new hpx::threads::detail::scheduled_thread_pool<local_queue_scheduler<>>(
+                    std::move(scheduler), notifier, pool_index, pool_name, mode,
+                    thread_offset));
+
+            return pool;
+        });
 
     hpx::start(1, nullptr);
     hpx::suspend();
