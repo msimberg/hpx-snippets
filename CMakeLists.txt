@@ -27,5 +27,8 @@ target_link_libraries(init_benchmark ${HPX_LIBRARIES})
 add_executable(suspension_benchmark suspension_benchmark.cpp)
 target_link_libraries(suspension_benchmark ${HPX_LIBRARIES})
 
+add_executable(start_stop_benchmark start_stop_benchmark.cpp)
+target_link_libraries(start_stop_benchmark ${HPX_LIBRARIES})
+
 add_executable(openmp_benchmark openmp_benchmark.cpp)
 target_link_libraries(openmp_benchmark ${HPX_LIBRARIES})

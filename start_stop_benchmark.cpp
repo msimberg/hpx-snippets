@@ -9,7 +9,6 @@
 #include <hpx/throw_exception.hpp>
 #include <hpx/parallel/algorithms/sort.hpp>
 #include <hpx/parallel/algorithms/minmax.hpp>
-#include <hpx/util/detail/yield_k.hpp>
 #include <hpx/util/high_resolution_clock.hpp>
 
 #include <boost/program_options.hpp>
@@ -29,12 +28,8 @@ static hpx::util::high_resolution_timer timer;
 
 int hpx_main(boost::program_options::variables_map& vm)
 {
-}
-
-int test_callback()
-{
     timings_main.push_back(timer.elapsed());
-    return 0;
+    return hpx::finalize();
 }
 
 struct statistics
@@ -82,58 +77,19 @@ int main(int argc, char ** argv)
 
     hpx::resource::partitioner rp(desc_commandline, argc, argv);
 
-    rp.create_thread_pool("default",
-        [delay_exit, background_work](
-            hpx::threads::policies::callback_notifier& notifier,
-            std::size_t num_threads, std::size_t thread_offset,
-            std::size_t pool_index, std::string const& pool_name)
-        -> std::unique_ptr<hpx::threads::detail::thread_pool_base>
-        {
-            using hpx::threads::policies::local_queue_scheduler;
-            local_queue_scheduler<>::init_parameter_type init(num_threads);
-            auto scheduler = std::make_unique<local_queue_scheduler<>>(init);
-
-            auto mode = hpx::threads::policies::scheduler_mode(
-                hpx::threads::policies::reduce_thread_priority |
-                (delay_exit ? hpx::threads::policies::delay_exit : 0) |
-                (background_work ? hpx::threads::policies::do_background_work : 0));
-
-            std::unique_ptr<hpx::threads::detail::thread_pool_base> pool(
-                new hpx::threads::detail::scheduled_thread_pool<local_queue_scheduler<>>(
-                    std::move(scheduler), notifier, pool_index, pool_name, mode,
-                    thread_offset));
-
-            return pool;
-        });
-
-    hpx::start();
-    hpx::runtime* rt = hpx::get_runtime_ptr();
-    hpx::util::detail::yield_while([rt]()
-        {
-            return rt->get_state() < hpx::state_running;
-        }, "");
-    hpx::suspend();
-
     // Time multiple runs
     for (int i = 0; i < repetitions; ++i)
     {
         timer.restart();
 
-        hpx::resume();
-        timings_start.push_back(timer.elapsed());
+        hpx::start(desc_commandline, argc, argv);
 
-        hpx::async(&test_callback);
+        timings_start.push_back(timer.elapsed());
         timings_async.push_back(timer.elapsed());
 
-        hpx::suspend();
+        hpx::stop();
         timings_stop.push_back(timer.elapsed());
-
-        timer.restart();
     }
-
-    hpx::resume();
-    hpx::async([]() { hpx::finalize(); });
-    hpx::stop();
 
     auto start_results = compute_statistics(timings_start);
     auto async_results = compute_statistics(timings_async);
