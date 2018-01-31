@@ -6,5 +6,5 @@ printf "\n";
 
 for i in `seq ${1} ${2}`; do
     printf "$i, "
-    OMP_NUM_THREADS=$i ./build/openmp_benchmark
+    OMP_NUM_THREADS=$i ./build/openmp_benchmark --repetitions=1000
 done

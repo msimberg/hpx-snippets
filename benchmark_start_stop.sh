@@ -9,6 +9,6 @@ printf "\n";
 
 for i in `seq ${1} ${2}`; do
     printf "$i, "
-    ./build/start_stop_benchmark --hpx:threads=$i
+    ./build/start_stop_benchmark --hpx:threads=$i --repetitions=1000
 done
 

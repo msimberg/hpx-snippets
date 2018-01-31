@@ -114,6 +114,8 @@ int main(int argc, char ** argv)
         }, "");
     hpx::suspend();
 
+    std::uint64_t threads = hpx::resource::get_num_threads("default");
+
     // Time multiple runs
     for (int i = 0; i < repetitions; ++i)
     {
@@ -128,24 +130,31 @@ int main(int argc, char ** argv)
         hpx::suspend();
         timings_stop.push_back(timer.elapsed());
 
-        timer.restart();
+	std::cout
+        << threads << ", "
+	<< std::fixed
+	<< timings_start[i] << ", "
+	<< timings_async[i] << ", "
+	<< timings_main[i] << ", "
+	<< timings_stop[i]
+	<< "\n";
     }
 
     hpx::resume();
     hpx::async([]() { hpx::finalize(); });
     hpx::stop();
 
-    auto start_results = compute_statistics(timings_start);
-    auto async_results = compute_statistics(timings_async);
-    auto main_results = compute_statistics(timings_main);
-    auto stop_results = compute_statistics(timings_stop);
+    // auto start_results = compute_statistics(timings_start);
+    // auto async_results = compute_statistics(timings_async);
+    // auto main_results = compute_statistics(timings_main);
+    // auto stop_results = compute_statistics(timings_stop);
 
-    std::cout
-        << std::fixed
-        << start_results.min << ", " << start_results.max << ", " << start_results.average << ", "
-        << async_results.min << ", " << async_results.max << ", " << async_results.average << ", "
-        << main_results.min << ", " << main_results.max << ", " << main_results.average << ", "
-        << stop_results.min << ", " << stop_results.max << ", " << stop_results.average
-        << "\n";
+    // std::cout
+    //     << std::fixed
+    //     << start_results.min << ", " << start_results.max << ", " << start_results.average << ", "
+    //     << async_results.min << ", " << async_results.max << ", " << async_results.average << ", "
+    //     << main_results.min << ", " << main_results.max << ", " << main_results.average << ", "
+    //     << stop_results.min << ", " << stop_results.max << ", " << stop_results.average
+    //     << "\n";
 }
 

@@ -15,7 +15,7 @@
 int main()
 {
     int x = 0;
-    int n = 1000000;
+    int n = 10000;
 
     {
         hpx::util::high_resolution_timer timer;
