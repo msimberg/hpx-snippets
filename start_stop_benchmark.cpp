@@ -99,7 +99,7 @@ int main(int argc, char ** argv)
             << timings_async[i] << ", "
             << timings_main[i] << ", "
             << timings_stop[i]
-            << "\n";
+            << std::endl;
     }
 
     // auto start_results = compute_statistics(timings_start);

@@ -54,7 +54,7 @@ int main()
             std::cout
                 << threads << ", "
                 << timings[i]
-                << "\n";
+                << std::endl;
         }
 
         // auto timings_min = std::min_element(std::begin(timings), std::end(timings));

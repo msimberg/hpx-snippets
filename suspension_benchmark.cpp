@@ -137,7 +137,7 @@ int main(int argc, char ** argv)
             << timings_async[i] << ", "
             << timings_main[i] << ", "
             << timings_stop[i]
-            << "\n";
+            << std::endl;
     }
 
     hpx::resume();
