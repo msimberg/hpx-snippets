@@ -75,7 +75,9 @@ int main(int argc, char ** argv)
     timings_main.reserve(repetitions);
     timings_stop.reserve(repetitions);
 
-    hpx::resource::partitioner rp(desc_commandline, argc, argv);
+    hpx::start(argc, argv);
+    std::uint64_t threads = hpx::resource::get_num_threads("default");
+    hpx::stop();
 
     // Time multiple runs
     for (int i = 0; i < repetitions; ++i)
@@ -89,19 +91,28 @@ int main(int argc, char ** argv)
 
         hpx::stop();
         timings_stop.push_back(timer.elapsed());
+
+        std::cout
+            << threads << ", "
+            << std::fixed
+            << timings_start[i] << ", "
+            << timings_async[i] << ", "
+            << timings_main[i] << ", "
+            << timings_stop[i]
+            << "\n";
     }
 
-    auto start_results = compute_statistics(timings_start);
-    auto async_results = compute_statistics(timings_async);
-    auto main_results = compute_statistics(timings_main);
-    auto stop_results = compute_statistics(timings_stop);
+    // auto start_results = compute_statistics(timings_start);
+    // auto async_results = compute_statistics(timings_async);
+    // auto main_results = compute_statistics(timings_main);
+    // auto stop_results = compute_statistics(timings_stop);
 
-    std::cout
-        << std::fixed
-        << start_results.min << ", " << start_results.max << ", " << start_results.average << ", "
-        << async_results.min << ", " << async_results.max << ", " << async_results.average << ", "
-        << main_results.min << ", " << main_results.max << ", " << main_results.average << ", "
-        << stop_results.min << ", " << stop_results.max << ", " << stop_results.average
-        << "\n";
+    // std::cout
+    //     << std::fixed
+    //     << start_results.min << ", " << start_results.max << ", " << start_results.average << ", "
+    //     << async_results.min << ", " << async_results.max << ", " << async_results.average << ", "
+    //     << main_results.min << ", " << main_results.max << ", " << main_results.average << ", "
+    //     << stop_results.min << ", " << stop_results.max << ", " << stop_results.average
+    //     << "\n";
 }
 

@@ -130,14 +130,14 @@ int main(int argc, char ** argv)
         hpx::suspend();
         timings_stop.push_back(timer.elapsed());
 
-	std::cout
-        << threads << ", "
-	<< std::fixed
-	<< timings_start[i] << ", "
-	<< timings_async[i] << ", "
-	<< timings_main[i] << ", "
-	<< timings_stop[i]
-	<< "\n";
+        std::cout
+            << threads << ", "
+            << std::fixed
+            << timings_start[i] << ", "
+            << timings_async[i] << ", "
+            << timings_main[i] << ", "
+            << timings_stop[i]
+            << "\n";
     }
 
     hpx::resume();
