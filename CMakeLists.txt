@@ -32,3 +32,5 @@ target_link_libraries(start_stop_benchmark ${HPX_LIBRARIES})
 
 add_executable(openmp_benchmark openmp_benchmark.cpp)
 target_link_libraries(openmp_benchmark ${HPX_LIBRARIES})
+
+add_executable(condition_variable_benchmark condition_variable_benchmark.cpp)
