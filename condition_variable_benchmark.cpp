@@ -8,6 +8,8 @@
 #include <thread>
 #include <vector>
 
+#include <hwloc.h>
+
 enum class thread_state
 {
     running,
@@ -16,8 +18,23 @@ enum class thread_state
     suspended
 };
 
+static hwloc_topology_t topo;
+static std::mutex topo_mtx;
+
 void thread_func(std::atomic<thread_state>& state, std::mutex& mtx, std::condition_variable& cond, int thread_num)
 {
+    {
+        std::lock_guard<std::mutex> lk(topo_mtx);
+
+        hwloc_cpuset_t cpuset = hwloc_bitmap_alloc();
+        hwloc_bitmap_only(cpuset, thread_num);
+
+        if (!hwloc_set_cpubind(topo, cpuset, HWLOC_CPUBIND_STRICT | HWLOC_CPUBIND_THREAD))
+            std::terminate();
+
+        hwloc_bitmap_free(cpuset);
+    }
+
     while (state != thread_state::stopped)
     {
         if (state == thread_state::suspending)
@@ -95,6 +112,8 @@ int main(int, char ** argv)
     const int num_threads = std::stoi(argv[1]);
     const int repetitions = std::stoi(argv[2]);
 
+    hwloc_topology_init(&topo);
+
     std::vector<std::atomic<thread_state>> states(num_threads);
     std::vector<std::condition_variable> conds(num_threads);
     std::vector<std::mutex> mtxs(num_threads);
@@ -124,4 +143,6 @@ int main(int, char ** argv)
     resume_all(conds, states);
 
     stop_all(states, threads);
+
+    hwloc_topology_destroy(topo);
 }
